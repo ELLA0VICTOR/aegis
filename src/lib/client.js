@@ -4,10 +4,27 @@ import { ADMIN_PRIVATE_KEY, CONTRACT_ADDRESS, GENLAYER_RPC_URL } from './constan
 
 let _client = null
 
-function getReadAccount() {
-  if (ADMIN_PRIVATE_KEY) {
-    return createAccount(ADMIN_PRIVATE_KEY)
+function normalizePrivateKey(value) {
+  const trimmed = (value || '').trim()
+  if (!trimmed) return ''
+  if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+    return `0x${trimmed}`
   }
+  return trimmed
+}
+
+function getReadAccount() {
+  const normalizedKey = normalizePrivateKey(ADMIN_PRIVATE_KEY)
+
+  if (normalizedKey) {
+    try {
+      return createAccount(normalizedKey)
+    } catch {
+      // Keep reads working even if the admin key is malformed.
+      return createAccount()
+    }
+  }
+
   return createAccount()
 }
 
@@ -74,6 +91,11 @@ export async function writeContract(functionName, args = [], account) {
 export async function waitForTx(hash) {
   const client = getClient()
   return client.waitForTransactionReceipt({ hash, status: 'FINALIZED' })
+}
+
+export function getAdminAccount() {
+  const normalizedKey = normalizePrivateKey(ADMIN_PRIVATE_KEY)
+  return createAccount(normalizedKey)
 }
 
 export { CONTRACT_ADDRESS }

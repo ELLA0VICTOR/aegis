@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react'
-import { writeContract, waitForTx } from '../lib/client.js'
-import { createAccount } from 'genlayer-js'
-import { ADMIN_PRIVATE_KEY } from '../lib/constants.js'
+import { getAdminAccount, writeContract, waitForTx } from '../lib/client.js'
 
 export function useTransaction() {
   const [txHash,   setTxHash]   = useState(null)
@@ -12,7 +10,7 @@ export function useTransaction() {
     setTxStatus('pending')
     setTxError(null)
     try {
-      const account = createAccount(ADMIN_PRIVATE_KEY)
+      const account = getAdminAccount()
       const hash    = await writeContract(functionName, args, account)
       setTxHash(hash)
       setTxStatus('accepted')
