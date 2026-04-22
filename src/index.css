@@ -1,0 +1,251 @@
+/* ── AEGIS Global Styles ────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary:    #0A0B0D;
+  --bg-secondary:  #0F1114;
+  --bg-card:       rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.055);
+  --border:        rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(0, 212, 170, 0.25);
+
+  --text-primary:  #E8E3D5;
+  --text-muted:    rgba(232, 227, 213, 0.45);
+  --text-dim:      rgba(232, 227, 213, 0.2);
+
+  --accent-safe:   #00D4AA;
+  --accent-warn:   #F5A623;
+  --accent-danger: #FF4444;
+  --accent-none:   rgba(232, 227, 213, 0.3);
+
+  --glow-safe:     0 0 20px rgba(0, 212, 170, 0.18);
+  --glow-warn:     0 0 20px rgba(245, 166, 35, 0.2);
+  --glow-danger:   0 0 20px rgba(255, 68, 68, 0.25);
+
+  --font-display: 'Rajdhani', sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-ui:      'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Hex grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'%3E%3Cpath d='M30 2 L58 17 L58 35 L30 50 L2 35 L2 17 Z' fill='none' stroke='rgba(255,255,255,0.022)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size: 60px 52px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Typography ───────────────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }
+.font-ui      { font-family: var(--font-ui); }
+
+/* ── Scan-line effect on PAUSED banner ───────────────── */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(255, 68, 68, 0.4); }
+  50%       { border-color: rgba(255, 68, 68, 0.9); }
+}
+
+@keyframes blink-warning {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes risk-fill {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: var(--dash-offset); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(0, 212, 170, 0.1); }
+  50%       { box-shadow: 0 0 28px rgba(0, 212, 170, 0.3); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Staggered page load ─────────────────────────────── */
+.anim-fade-up {
+  animation: fade-up 0.5s ease forwards;
+  opacity: 0;
+}
+.anim-delay-1 { animation-delay: 0.1s; }
+.anim-delay-2 { animation-delay: 0.2s; }
+.anim-delay-3 { animation-delay: 0.3s; }
+.anim-delay-4 { animation-delay: 0.4s; }
+.anim-delay-5 { animation-delay: 0.5s; }
+
+/* ── Card base ───────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.card:hover {
+  background: var(--bg-card-hover);
+}
+
+/* ── Status indicators ───────────────────────────────── */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot.active  { background: var(--accent-safe); box-shadow: 0 0 8px var(--accent-safe); }
+.status-dot.paused  { background: var(--accent-danger); animation: blink-warning 1s infinite; }
+.status-dot.warn    { background: var(--accent-warn); }
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* ── Button base ─────────────────────────────────────── */
+.btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-safe {
+  border-color: var(--accent-safe);
+  color: var(--accent-safe);
+  background: rgba(0, 212, 170, 0.06);
+}
+.btn-safe:hover {
+  background: rgba(0, 212, 170, 0.14);
+  box-shadow: var(--glow-safe);
+}
+.btn-danger {
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+  background: rgba(255, 68, 68, 0.06);
+}
+.btn-danger:hover {
+  background: rgba(255, 68, 68, 0.14);
+  box-shadow: var(--glow-danger);
+}
+.btn-warn {
+  border-color: var(--accent-warn);
+  color: var(--accent-warn);
+  background: rgba(245, 166, 35, 0.06);
+}
+.btn-warn:hover {
+  background: rgba(245, 166, 35, 0.14);
+  box-shadow: var(--glow-warn);
+}
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Hex address ─────────────────────────────────────── */
+.hex-address {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.hex-address .hex-prefix { color: var(--text-dim); }
+.hex-address .hex-body   { color: var(--text-muted); }
+.hex-address .hex-tail   { color: var(--text-primary); opacity: 0.8; }
+
+/* ── Range input ─────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+  border-radius: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: var(--accent-safe);
+  cursor: pointer;
+  border: none;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: var(--accent-safe);
+  cursor: pointer;
+  border: none;
+}
+
+/* ── Number input ─────────────────────────────────────── */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
+/* ── Focus ring override ──────────────────────────────── */
+input:focus, button:focus {
+  outline: 1px solid rgba(0, 212, 170, 0.4);
+  outline-offset: 1px;
+}
