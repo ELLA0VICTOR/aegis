@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Toaster } from 'react-hot-toast'
+import { FeedbackWidget } from './components/FeedbackWidget.jsx'
 import { Dashboard } from './pages/Dashboard.jsx'
 import { Admin } from './pages/Admin.jsx'
 import { useContractState } from './hooks/useContractState.js'
@@ -142,6 +143,8 @@ export default function App() {
       ) : (
         <Admin {...sharedProps} />
       )}
+
+      <FeedbackWidget />
 
       <Toaster
         position="bottom-right"

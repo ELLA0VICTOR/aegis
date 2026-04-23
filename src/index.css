@@ -265,3 +265,121 @@ input:focus, button:focus {
     font-size: 0.68rem;
   }
 }
+
+.feedback-widget {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+}
+
+.feedback-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(0, 212, 170, 0.25);
+  background: rgba(15, 17, 20, 0.92);
+  color: var(--accent-safe);
+  padding: 0.7rem 0.95rem;
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: var(--glow-safe);
+  backdrop-filter: blur(10px);
+}
+
+.feedback-trigger:hover {
+  background: rgba(0, 212, 170, 0.08);
+}
+
+.feedback-trigger__icon,
+.feedback-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-panel {
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1rem;
+  background: rgba(15, 17, 20, 0.96);
+  backdrop-filter: blur(14px);
+}
+
+.feedback-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.feedback-panel__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--accent-safe);
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+}
+
+.feedback-close {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.feedback-copy {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  margin-bottom: 0.85rem;
+}
+
+.feedback-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.feedback-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 1px;
+  padding: 0.7rem 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  outline: none;
+}
+
+.feedback-input--textarea {
+  min-height: 5.4rem;
+  resize: vertical;
+}
+
+.feedback-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.feedback-hint {
+  margin-top: 0.7rem;
+  color: var(--text-dim);
+  font-size: 0.62rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  .feedback-actions {
+    flex-direction: row;
+  }
+
+  .feedback-actions .btn {
+    flex: 1;
+  }
+}
