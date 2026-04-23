@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
-import { getAdminAccount, writeContract, waitForTx } from '../lib/client.js'
+import { submitBackendTransaction, waitForTx, writeContractLocally } from '../lib/client.js'
+import { BACKEND_URL } from '../lib/constants.js'
+import { getAdminApiToken } from '../lib/adminSession.js'
 
 export function useTransaction() {
   const [txHash,   setTxHash]   = useState(null)
@@ -10,8 +12,20 @@ export function useTransaction() {
     setTxStatus('pending')
     setTxError(null)
     try {
-      const account = getAdminAccount()
-      const hash    = await writeContract(functionName, args, account)
+      let hash = ''
+
+      if (BACKEND_URL) {
+        const adminToken = getAdminApiToken()
+        if (!adminToken) {
+          throw new Error('Set the admin API token first')
+        }
+
+        const response = await submitBackendTransaction(functionName, args, adminToken)
+        hash = response.hash
+      } else {
+        hash = await writeContractLocally(functionName, args)
+      }
+
       setTxHash(hash)
       setTxStatus('accepted')
 

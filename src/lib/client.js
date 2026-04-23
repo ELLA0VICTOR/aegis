@@ -1,6 +1,6 @@
 import { createAccount, createClient } from 'genlayer-js'
 import { localnet } from 'genlayer-js/chains'
-import { ADMIN_PRIVATE_KEY, CONTRACT_ADDRESS, GENLAYER_RPC_URL } from './constants.js'
+import { ADMIN_PRIVATE_KEY, BACKEND_URL, CONTRACT_ADDRESS, GENLAYER_RPC_URL } from './constants.js'
 
 let _client = null
 
@@ -78,7 +78,13 @@ export async function readContract(functionName, args = []) {
   return normalizeResult(result)
 }
 
-export async function writeContract(functionName, args = [], account) {
+export async function writeContractLocally(functionName, args = []) {
+  const normalizedKey = normalizePrivateKey(ADMIN_PRIVATE_KEY)
+  if (!normalizedKey) {
+    throw new Error('No local admin signer configured')
+  }
+
+  const account = createAccount(normalizedKey)
   const client = getClient()
   return client.writeContract({
     address: CONTRACT_ADDRESS,
@@ -93,9 +99,27 @@ export async function waitForTx(hash) {
   return client.waitForTransactionReceipt({ hash, status: 'FINALIZED' })
 }
 
-export function getAdminAccount() {
-  const normalizedKey = normalizePrivateKey(ADMIN_PRIVATE_KEY)
-  return createAccount(normalizedKey)
+export async function submitBackendTransaction(functionName, args = [], token = '') {
+  if (!BACKEND_URL) {
+    throw new Error('Backend signer URL is not configured')
+  }
+
+  const response = await fetch(`${BACKEND_URL}/api/admin/tx`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ functionName, args }),
+  })
+
+  const payload = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(payload.error || 'Backend transaction request failed')
+  }
+
+  return payload
 }
 
 export { CONTRACT_ADDRESS }

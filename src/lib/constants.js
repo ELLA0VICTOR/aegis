@@ -3,8 +3,11 @@ export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
   '0xa3b7C6E1454cb11a243B2a5dDb05161d725f08E1'
 
-// Admin private key for demo write operations only
+// Optional local-development signer. Do not set this in Vercel.
 export const ADMIN_PRIVATE_KEY = import.meta.env.VITE_ADMIN_PRIVATE_KEY || ''
+
+// Optional backend signer API. When set, frontend writes go through the backend.
+export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/+$/, '')
 
 // RPC endpoint used by genlayer-js
 export const GENLAYER_RPC_URL =

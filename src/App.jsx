@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast'
 import { Dashboard } from './pages/Dashboard.jsx'
 import { Admin } from './pages/Admin.jsx'
 import { useContractState } from './hooks/useContractState.js'
+import { clearAdminApiToken, getAdminApiToken, setAdminApiToken } from './lib/adminSession.js'
+import { ADMIN_PRIVATE_KEY, BACKEND_URL } from './lib/constants.js'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'DASHBOARD' },
@@ -12,6 +14,7 @@ const NAV_ITEMS = [
 export default function App() {
   const [page, setPage] = useState('dashboard')
   const [selectedProtocolId, setSelectedProtocolId] = useState(null)
+  const [hasAdminToken, setHasAdminToken] = useState(() => !!getAdminApiToken())
   const contractState = useContractState(selectedProtocolId)
 
   useEffect(() => {
@@ -19,6 +22,32 @@ export default function App() {
       setSelectedProtocolId(contractState.resolvedProtocolId)
     }
   }, [contractState.resolvedProtocolId, selectedProtocolId])
+
+  function handleAdminAccessClick() {
+    if (!BACKEND_URL) return
+
+    if (hasAdminToken) {
+      const shouldClear = window.confirm('Clear the saved admin API token for this browser session?')
+      if (!shouldClear) return
+      clearAdminApiToken()
+      setHasAdminToken(false)
+      return
+    }
+
+    const token = window.prompt('Paste your Render admin API token')
+    if (!token || !token.trim()) return
+
+    setAdminApiToken(token)
+    setHasAdminToken(true)
+  }
+
+  const accessLabel = BACKEND_URL
+    ? hasAdminToken
+      ? 'ADMIN API READY'
+      : 'ADMIN API LOCKED'
+    : ADMIN_PRIVATE_KEY
+      ? 'LOCAL SIGNER'
+      : 'READ ONLY'
 
   const sharedProps = {
     ...contractState,
@@ -63,6 +92,39 @@ export default function App() {
         })}
 
         <div style={{ flex: 1, minWidth: 0 }} />
+        <button
+          onClick={handleAdminAccessClick}
+          className="font-display"
+          style={{
+            fontSize: '0.68rem',
+            letterSpacing: '0.1em',
+            padding: '4px 12px',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: BACKEND_URL
+              ? hasAdminToken
+                ? 'rgba(0,212,170,0.08)'
+                : 'rgba(245,166,35,0.08)'
+              : 'transparent',
+            color: BACKEND_URL
+              ? hasAdminToken
+                ? 'var(--accent-safe)'
+                : 'var(--accent-warn)'
+              : ADMIN_PRIVATE_KEY
+                ? 'var(--accent-safe)'
+                : 'var(--text-dim)',
+            cursor: BACKEND_URL ? 'pointer' : 'default',
+            transition: 'all 0.15s',
+          }}
+          title={
+            BACKEND_URL
+              ? hasAdminToken
+                ? 'Click to clear the admin API token from this browser session'
+                : 'Click to enter the admin API token for this browser session'
+              : 'Frontend is not using the backend signer'
+          }
+        >
+          {accessLabel}
+        </button>
         <span
           className="font-mono ml-auto w-full text-left sm:w-auto sm:text-right"
           style={{

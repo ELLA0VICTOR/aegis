@@ -31,6 +31,13 @@ This is not a generic price oracle and it does not move funds by itself. The cur
 - Tailwind CSS
 - `genlayer-js`
 
+### Backend signer
+
+- Node.js
+- Express
+- `genlayer-js`
+- bearer-token authentication with origin allowlisting
+
 ## Multi-Protocol Model
 
 One deployed contract can manage many protocols at once.
@@ -56,6 +63,10 @@ Nothing is hardcoded to one specific protocol anymore. Production safety still d
 aegis/
 |-- contracts/
 |   `-- aegis.py
+|-- server/
+|   |-- index.js
+|   |-- package.json
+|   `-- .env.example
 |-- src/
 |   |-- components/
 |   |-- hooks/
@@ -97,19 +108,39 @@ Create a local `.env` file:
 
 ```text
 VITE_CONTRACT_ADDRESS=0xYourDeployedContractAddress
-VITE_ADMIN_PRIVATE_KEY=0xYourAdminPrivateKey
+VITE_BACKEND_URL=https://your-render-service.onrender.com
 VITE_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
-`.env` is ignored by git. `.env.example` is safe to commit.
+`VITE_ADMIN_PRIVATE_KEY` is optional and should only be used for local-only fallback testing. Do not set it in Vercel.
 
-### 4. Run the app
+### 4. Configure the Render signer backend
+
+Create `server/.env` from `server/.env.example`:
+
+```text
+CONTRACT_ADDRESS=0xYourDeployedContractAddress
+GENLAYER_RPC_URL=https://studio.genlayer.com/api
+ADMIN_PRIVATE_KEY=0xYourAdminPrivateKey
+ADMIN_API_TOKEN=replace-with-a-long-random-token
+ALLOWED_ORIGINS=http://localhost:5173,https://your-vercel-app.vercel.app
+```
+
+Render service settings:
+
+- Root directory: `server`
+- Build command: `npm install`
+- Start command: `npm start`
+
+The private key stays on Render only.
+
+### 5. Run the app
 
 ```bash
 npm run dev
 ```
 
-### 5. Build for production
+### 6. Build for production
 
 ```bash
 npm run build
@@ -188,6 +219,8 @@ This keeps the system protocol-aware instead of reacting to unrelated hacks else
 - inject fake incidents for testing
 - clear a profile's state
 
+When `VITE_BACKEND_URL` is configured, the frontend sends writes through the signer backend and keeps the private key out of the browser. The admin API token is entered at runtime and stored only for the current browser session.
+
 ## Example Profile Setup
 
 Example input for a `Uniswap` profile:
@@ -240,6 +273,8 @@ The fake tests validate profile creation, source management, admin actions, and 
 - the contract only pauses the affected profile, not every profile globally
 - there is no token transfer or treasury movement in this MVP
 - admin writes require the configured admin address
+- the signer backend only allows a fixed whitelist of contract write methods
+- the signer backend requires a bearer token and can restrict allowed origins
 - `.env` is ignored by git so private keys stay local
 
 ## Production Notes
