@@ -99,12 +99,17 @@ export async function waitForTx(hash) {
   return client.waitForTransactionReceipt({ hash, status: 'FINALIZED' })
 }
 
-export async function submitBackendTransaction(functionName, args = [], token = '') {
+export async function submitBackendTransaction(
+  functionName,
+  args = [],
+  { token = '', access = 'admin' } = {}
+) {
   if (!BACKEND_URL) {
     throw new Error('Backend signer URL is not configured')
   }
 
-  const response = await fetch(`${BACKEND_URL}/api/admin/tx`, {
+  const endpoint = access === 'public' ? '/api/public/tx' : '/api/admin/tx'
+  const response = await fetch(`${BACKEND_URL}${endpoint}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -221,6 +221,8 @@ This keeps the system protocol-aware instead of reacting to unrelated hacks else
 
 When `VITE_BACKEND_URL` is configured, the frontend sends writes through the signer backend and keeps the private key out of the browser. The admin API token is entered at runtime and stored only for the current browser session.
 
+Public scans use the public signer route and do not require the admin token. The token is only needed for true admin actions such as creating profiles, editing protocol metadata, toggling monitoring, manual overrides, and fake tests.
+
 ## Example Profile Setup
 
 Example input for a `Uniswap` profile:
@@ -274,6 +276,7 @@ The fake tests validate profile creation, source management, admin actions, and 
 - there is no token transfer or treasury movement in this MVP
 - admin writes require the configured admin address
 - the signer backend only allows a fixed whitelist of contract write methods
+- `run_risk_check` is exposed on a separate public signer route
 - the signer backend requires a bearer token and can restrict allowed origins
 - `.env` is ignored by git so private keys stay local
 

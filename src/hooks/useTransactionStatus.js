@@ -8,19 +8,23 @@ export function useTransaction() {
   const [txStatus, setTxStatus] = useState('idle') // idle | pending | accepted | finalized | error
   const [txError,  setTxError]  = useState(null)
 
-  const execute = useCallback(async (functionName, args = []) => {
+  const execute = useCallback(async (functionName, args = [], options = {}) => {
     setTxStatus('pending')
     setTxError(null)
     try {
       let hash = ''
+      const access = options.access || 'admin'
 
       if (BACKEND_URL) {
         const adminToken = getAdminApiToken()
-        if (!adminToken) {
-          throw new Error('Set the admin API token first')
+        if (access === 'admin' && !adminToken) {
+          throw new Error('Set the admin API token first for admin actions')
         }
 
-        const response = await submitBackendTransaction(functionName, args, adminToken)
+        const response = await submitBackendTransaction(functionName, args, {
+          token: access === 'admin' ? adminToken : '',
+          access,
+        })
         hash = response.hash
       } else {
         hash = await writeContractLocally(functionName, args)

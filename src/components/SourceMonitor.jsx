@@ -12,7 +12,7 @@ export function SourceMonitor({ selectedProtocolId, lastSourceUrl, lastCheckedTs
 
     setRunning(url)
     try {
-      await execute('run_risk_check', [selectedProtocolId, url])
+      await execute('run_risk_check', [selectedProtocolId, url], { access: 'public' })
       toast.success('Risk check submitted', {
         style: {
           background: '#0F1114',
