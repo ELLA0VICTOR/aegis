@@ -1,212 +1,268 @@
-# AEGIS — Protocol Sentinel
+# AEGIS
 
-> GenLayer Intelligent Contract system for on-chain DeFi hack detection and emergency protocol pause.
+AEGIS is a multi-protocol DeFi risk sentinel built on GenLayer.
 
----
+It lets an admin create protocol profiles, attach real trusted web sources to each profile, run live web-assisted risk checks, and automatically pause deposits for a protocol when the assessed risk crosses a critical threshold.
 
-## Architecture Overview
+## What It Does
 
+- Creates any number of protocol profiles from one contract deployment
+- Stores per-profile risk state, pause state, monitoring state, and incident history on-chain
+- Reads live web evidence from admin-approved sources
+- Uses GenLayer validator consensus to score protocol-specific risk
+- Auto-pauses a profile when the risk score is `7` or higher
+- Supports manual overrides and fake incident injection for testing
+
+This is not a generic price oracle and it does not move funds by itself. The current MVP is the decision engine and pause-state layer that other DeFi products could integrate with.
+
+## Stack
+
+### Contract
+
+- GenLayer Intelligent Contract in Python
+- `TreeMap`, `DynArray`, `u8`, `u256`
+- `gl.vm.run_nondet_unsafe(...)` for live risk evaluation
+- `gl.nondet.web.get(...)` plus `gl.nondet.exec_prompt(...)` for web-assisted protocol assessment
+
+### Frontend
+
+- React
+- Vite
+- Tailwind CSS
+- `genlayer-js`
+
+## Multi-Protocol Model
+
+One deployed contract can manage many protocols at once.
+
+Each protocol profile has its own:
+
+- `protected_protocol`
+- `protocol_aliases_csv`
+- trusted source whitelist
+- `risk_level`
+- `risk_category`
+- `paused`
+- `pause_reason`
+- `monitor_enabled`
+- `check_count`
+- incident log
+
+Nothing is hardcoded to one specific protocol anymore. Production safety still depends on the admin supplying good sources for each profile.
+
+## Project Structure
+
+```text
+aegis/
+|-- contracts/
+|   `-- aegis.py
+|-- src/
+|   |-- components/
+|   |-- hooks/
+|   |-- lib/
+|   |-- pages/
+|   |-- App.jsx
+|   |-- index.css
+|   `-- main.jsx
+|-- tests/
+|   |-- test_aegis_fake.py
+|   `-- test_aegis_real.py
+|-- .env.example
+|-- index.html
+|-- package.json
+`-- README.md
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  AEGIS Intelligent Contract  (contracts/aegis.py)               │
-│                                                                 │
-│  ┌──────────────┐   ┌───────────────┐   ┌──────────────────┐  │
-│  │ Trusted URL  │──▶│  LLM Analysis │──▶│  On-Chain State  │  │
-│  │  Whitelist   │   │  Risk Score   │   │  risk_level u8   │  │
-│  └──────────────┘   └───────────────┘   │  paused bool     │  │
-│                                         │  incident_log    │  │
-│                                         └──────────────────┘  │
-│                                                 │              │
-│                          risk_level ≥ 7 ────────▶ auto-pause   │
-└─────────────────────────────────────────────────────────────────┘
-         ▲
-         │  genlayer-js SDK
-         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  React Frontend  (src/)                                         │
-│  Dashboard: RiskGauge + IncidentFeed + SourceMonitor           │
-│  Admin:     ManualPause + FakeInject + RiskOverride            │
-└─────────────────────────────────────────────────────────────────┘
-```
 
----
+## Deploy
 
-## Quick Start
-
-### 1. Install Dependencies
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Deploy the Contract (GenLayer Studio)
+### 2. Deploy in GenLayer Studio
 
-1. Open GenLayer Studio at [http://localhost:8080](http://localhost:8080)
-2. Load `contracts/aegis.py`
-3. Deploy with these constructor arguments:
-   ```
-   admin_address = "0xYourAdminAddressHere"
-   protected_protocol = "Uniswap"
-   protocol_aliases_csv = "UNI,Uniswap Protocol"
-   ```
-4. Copy the deployed contract address
+Open GenLayer Studio, load `contracts/aegis.py`, and deploy with:
 
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
+```text
+admin_address = "0xYourAdminAddressHere"
 ```
 
-Edit `.env`:
-```bash
+After deployment, copy the contract address.
+
+### 3. Configure the frontend
+
+Create a local `.env` file:
+
+```text
 VITE_CONTRACT_ADDRESS=0xYourDeployedContractAddress
-VITE_ADMIN_PRIVATE_KEY=0xYourAdminPrivateKey   # local dev only
-VITE_NETWORK=localnet
+VITE_ADMIN_PRIVATE_KEY=0xYourAdminPrivateKey
+VITE_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
-### 4. Run Frontend
+`.env` is ignored by git. `.env.example` is safe to commit.
+
+### 4. Run the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173)
+### 5. Build for production
 
----
+```bash
+npm run build
+```
 
-## Contract Methods
+## Contract API
 
-### View Methods (free, no transaction)
+### View methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `get_risk_level()` | `int` | Current risk score (0–10) |
-| `is_paused()` | `bool` | True if protocol is paused |
-| `can_deposit()` | `bool` | True if deposits are allowed |
-| `get_pause_reason()` | `str` | Reason string for current pause |
-| `get_risk_category()` | `str` | NONE/ELEVATED/HIGH/CRITICAL/EMERGENCY |
-| `get_protocol_context()` | `dict` | Protected protocol name and aliases |
-| `get_full_state()` | `dict` | All state in one call |
-| `get_incident_log()` | `list` | Up to 20 most recent incidents |
-| `get_trusted_sources()` | `list` | Whitelisted URLs |
-| `get_admin()` | `str` | Admin address |
+- `get_admin()`
+- `get_protocol_count()`
+- `get_protocol_ids()`
+- `list_protocols()`
+- `get_protocol(profile_id)`
+- `get_incident_log(profile_id)`
+- `get_trusted_sources(profile_id)`
 
-### Write Methods (require transaction)
+### Write methods
 
-| Method | Auth | Description |
-|--------|------|-------------|
-| `run_risk_check(source_url)` | Anyone | Live web + LLM risk check on trusted URL |
-| `admin_override_pause(should_pause, reason)` | Admin | Manual pause/unpause |
-| `admin_update_protocol_context(protocol, aliases)` | Admin | Update the protected protocol context |
-| `admin_inject_fake_incident(level, reason, label)` | Admin | Inject test incident |
-| `admin_set_risk_level(level, reason)` | Admin | Directly set risk level |
-| `admin_set_monitor_enabled(enabled)` | Admin | Toggle monitoring on/off |
-| `admin_clear_log()` | Admin | Clear log and reset state |
+- `admin_create_protocol(protected_protocol, protocol_aliases_csv, trusted_sources_text)`
+- `admin_update_protocol_context(profile_id, protected_protocol, protocol_aliases_csv="")`
+- `admin_update_trusted_sources(profile_id, trusted_sources_text)`
+- `admin_set_monitor_enabled(profile_id, enabled)`
+- `run_risk_check(profile_id, source_url)`
+- `admin_override_pause(profile_id, should_pause, reason)`
+- `admin_set_risk_level(profile_id, level, reason)`
+- `admin_inject_fake_incident(profile_id, risk_level, reason, source_label)`
+- `admin_clear_protocol(profile_id)`
 
----
+## Risk Behavior
 
-## Risk Levels
+- `0-2` -> `NONE`
+- `3-4` -> `ELEVATED`
+- `5-6` -> `HIGH`
+- `7-8` -> `CRITICAL`
+- `9-10` -> `EMERGENCY`
 
-| Score | Category | Behavior |
-|-------|----------|----------|
-| 0–2 | NONE | Normal — deposits allowed |
-| 3–4 | ELEVATED | Unusual activity — monitoring |
-| 5–6 | HIGH | Potential attack signal |
-| 7–8 | CRITICAL | **AUTO-PAUSE triggered** |
-| 9–10 | EMERGENCY | **AUTO-PAUSE triggered** |
+If a profile reaches `7` or above during `run_risk_check`, AEGIS automatically pauses that profile.
 
----
+Incident logging is selective:
+
+- routine low-risk scans can update `check_count` without creating an incident record
+- incidents are logged for meaningful elevated risk or pause events
+
+## How Live Checks Work
+
+For a selected protocol profile:
+
+1. The admin or frontend triggers `run_risk_check(profile_id, source_url)`.
+2. The contract verifies the source is in that profile's whitelist.
+3. The contract fetches the live page content.
+4. It checks whether the page actually mentions the protected protocol or one of its aliases.
+5. If there is a relevant match, GenLayer evaluates the excerpt and returns a bounded risk score plus a short reason.
+6. Validators independently re-run the same logic and compare stable derived fields.
+7. The profile state is updated on-chain.
+
+This keeps the system protocol-aware instead of reacting to unrelated hacks elsewhere in DeFi.
+
+## Frontend Flow
+
+### Dashboard
+
+- choose a protocol profile
+- see current risk state and pause state
+- see the incident feed
+- trigger live scans from trusted sources
+
+### Admin
+
+- create protocol profiles
+- edit protocol names and aliases
+- update trusted source lists
+- enable or disable monitoring
+- manually pause or resume a profile
+- manually set risk level
+- inject fake incidents for testing
+- clear a profile's state
+
+## Example Profile Setup
+
+Example input for a `Uniswap` profile:
+
+```text
+Protocol name:
+Uniswap
+
+Aliases:
+UNI,Uniswap Protocol
+
+Trusted source URLs:
+https://api.llama.fi/tvl/uniswap
+https://rekt.news/
+https://defillama.com/hacks
+```
+
+You can create a different profile with completely different real sources after deployment. The contract is no longer locked to one protocol.
 
 ## Testing
 
+### Studio / frontend testing
+
+- create a profile
+- run a real scan from the dashboard
+- confirm `check_count` and `last_checked_ts` update
+- use `admin_inject_fake_incident(...)` to test elevated-risk and auto-pause flows quickly
+
+### Linting
+
 ```bash
-# Fake incident tests — no internet required, runs instantly
-pytest tests/test_aegis_fake.py -v
-
-# Real web source tests — requires GenLayer node + internet
-pytest tests/test_aegis_real.py -v -m real -s
-
-# Skip real tests in CI
-pytest tests/ -m "not real"
+genvm-lint lint contracts/aegis.py
+genvm-lint validate contracts/aegis.py
+genvm-lint check contracts/aegis.py --json
 ```
 
----
+### Python tests
 
-## Trusted Sources
+Fake and real test files are included:
 
-The contract only fetches from these whitelisted URLs:
+- `tests/test_aegis_fake.py`
+- `tests/test_aegis_real.py`
 
-- `https://api.llama.fi/tvl/uniswap` — DeFiLlama Uniswap TVL API
-- `https://rekt.news/` — DeFi hack news
-- `https://defillama.com/hacks` — DeFiLlama hacks tracker
+The fake tests validate profile creation, source management, admin actions, and pause logic without depending on live web updates.
 
-To add sources: edit `TRUSTED_SOURCES` in `contracts/aegis.py` and redeploy.
+## Security Notes
 
----
+- trusted sources are per-profile and admin-controlled
+- a source must be explicitly whitelisted before it can be scanned
+- the contract only pauses the affected profile, not every profile globally
+- there is no token transfer or treasury movement in this MVP
+- admin writes require the configured admin address
+- `.env` is ignored by git so private keys stay local
 
-## Security Properties
+## Production Notes
 
-- **URL Whitelist enforced**: `run_risk_check` rejects any URL not in `TRUSTED_SOURCES`
-- **Equivalence Principle**: Validators re-run the risk check independently; only ±1 risk-score tolerance allowed
-- **No autonomous fund movement**: v1 only toggles a `paused` flag — it never transfers tokens
-- **Admin-only writes**: All state-mutating admin methods verify `gl.message.sender_address == self.admin`
-- **Integer-only math**: All counters use `u8`/`u256` — no floating point
+AEGIS becomes useful when paired with high-signal sources, especially:
 
----
+- official status pages
+- official governance forums
+- official incident writeups
+- carefully chosen third-party monitoring pages
 
-## Project Structure
+Better sources produce better risk checks. The safest workflow is:
 
-```
-aegis/
-├── contracts/
-│   └── aegis.py              ← GenLayer Intelligent Contract
-├── tests/
-│   ├── test_aegis_fake.py    ← Offline tests (fake incident injection)
-│   └── test_aegis_real.py    ← Live web tests (marked 'real')
-├── src/
-│   ├── main.jsx              ← React entry point
-│   ├── App.jsx               ← Root + nav
-│   ├── index.css             ← Global styles + CSS variables
-│   ├── lib/
-│   │   ├── client.js         ← genlayer-js singleton
-│   │   └── constants.js      ← Contract address, colors, config
-│   ├── hooks/
-│   │   ├── useContractState.js     ← Polls contract state every 5s
-│   │   └── useTransactionStatus.js ← Tx lifecycle management
-│   ├── components/
-│   │   ├── RiskGauge.jsx     ← Animated SVG circular gauge
-│   │   ├── IncidentFeed.jsx  ← Scrollable incident log
-│   │   ├── StatusBanner.jsx  ← Full-width PAUSED alert banner
-│   │   ├── AdminPanel.jsx    ← Manual override controls
-│   │   ├── SourceMonitor.jsx ← Source list with scan triggers
-│   │   ├── TxToast.jsx       ← Toast notification helpers
-│   │   └── HexAddress.jsx    ← Monospace address display
-│   └── pages/
-│       ├── Dashboard.jsx     ← Main monitoring view
-│       └── Admin.jsx         ← Admin command center
-├── .env.example
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── postcss.config.js
-```
+1. admin defines protocol name and aliases
+2. admin supplies or approves trusted sources
+3. AEGIS monitors only those sources
 
----
+## Current Version
 
-## Frontend Design
+- multi-protocol contract deployment
+- frontend profile switching
+- real web-assisted checks
+- fake incident simulation for testing
+- mobile-friendly dashboard and admin controls
 
-**Aesthetic**: OBSIDIAN SENTINEL — dark operations center aesthetic.
-
-- **Background**: `#0A0B0D` with SVG hex-grid overlay
-- **Fonts**: Rajdhani (display) · IBM Plex Mono (addresses/data) · Outfit (UI)
-- **Accent Safe**: `#00D4AA` teal-green
-- **Accent Warn**: `#F5A623` amber  
-- **Accent Danger**: `#FF4444` red
-- **No shadows** — glow effects only
-- **Staggered page load** with `animation-delay`
-- **5-second polling** with optimistic UI updates
-
----
-
-*Built for the GenLayer Hackathon. AEGIS — because lives depend on it.*
+Built for GenLayer as a real, configurable DeFi risk sentinel rather than a single-protocol demo.

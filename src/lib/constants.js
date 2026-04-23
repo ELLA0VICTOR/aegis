@@ -1,7 +1,7 @@
 // Contract configuration
 export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
-  '0x6DCD24Ad537F3Fd33B4CA7285056bfa9d0295DC5'
+  '0xa3b7C6E1454cb11a243B2a5dDb05161d725f08E1'
 
 // Admin private key for demo write operations only
 export const ADMIN_PRIVATE_KEY = import.meta.env.VITE_ADMIN_PRIVATE_KEY || ''

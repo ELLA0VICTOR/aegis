@@ -1,13 +1,10 @@
 import React from 'react'
-import { useContractState } from '../hooks/useContractState.js'
-import { RiskGauge }     from '../components/RiskGauge.jsx'
-import { IncidentFeed }  from '../components/IncidentFeed.jsx'
-import { StatusBanner }  from '../components/StatusBanner.jsx'
+import { RiskGauge } from '../components/RiskGauge.jsx'
+import { IncidentFeed } from '../components/IncidentFeed.jsx'
+import { StatusBanner } from '../components/StatusBanner.jsx'
 import { SourceMonitor } from '../components/SourceMonitor.jsx'
-import { HexAddress }    from '../components/HexAddress.jsx'
-import { RISK_COLORS }   from '../lib/constants.js'
+import { RISK_COLORS } from '../lib/constants.js'
 
-// ── Custom SVG shield logo ─────────────────────────────────────────────────
 function AegisLogo({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 32" fill="none">
@@ -28,7 +25,6 @@ function AegisLogo({ size = 28 }) {
   )
 }
 
-// ── Stat card ──────────────────────────────────────────────────────────────
 function StatCard({ label, value, color, delay = 0, subtext }) {
   return (
     <div
@@ -38,10 +34,10 @@ function StatCard({ label, value, color, delay = 0, subtext }) {
       <div
         className="font-display"
         style={{
-          fontSize:      '0.65rem',
+          fontSize: '0.65rem',
           letterSpacing: '0.1em',
-          color:         'var(--text-dim)',
-          marginBottom:  6,
+          color: 'var(--text-dim)',
+          marginBottom: 6,
         }}
       >
         {label}
@@ -64,35 +60,36 @@ function StatCard({ label, value, color, delay = 0, subtext }) {
   )
 }
 
-// ── Radar icon ─────────────────────────────────────────────────────────────
 function RadarIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="7" r="6"   stroke="var(--accent-safe)" strokeWidth="1" opacity="0.4" />
+      <circle cx="7" cy="7" r="6" stroke="var(--accent-safe)" strokeWidth="1" opacity="0.4" />
       <circle cx="7" cy="7" r="3.5" stroke="var(--accent-safe)" strokeWidth="1" opacity="0.6" />
-      <circle cx="7" cy="7" r="1"   fill="var(--accent-safe)" />
+      <circle cx="7" cy="7" r="1" fill="var(--accent-safe)" />
       <line
-        x1="7" y1="7" x2="7" y2="1.5"
-        stroke="var(--accent-safe)" strokeWidth="1"
+        x1="7"
+        y1="7"
+        x2="7"
+        y2="1.5"
+        stroke="var(--accent-safe)"
+        strokeWidth="1"
         style={{ transformOrigin: '7px 7px', animation: 'spin 3s linear infinite' }}
       />
     </svg>
   )
 }
 
-// ── Log icon ───────────────────────────────────────────────────────────────
 function LogIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
       <rect x="1" y="1" width="10" height="10" stroke="var(--accent-danger)" strokeWidth="1" opacity="0.6" />
-      <line x1="1" y1="4"  x2="11" y2="4"  stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.3" />
-      <line x1="1" y1="7"  x2="11" y2="7"  stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.3" />
-      <line x1="3" y1="1"  x2="3"  y2="11" stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.15" />
+      <line x1="1" y1="4" x2="11" y2="4" stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.3" />
+      <line x1="1" y1="7" x2="11" y2="7" stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.3" />
+      <line x1="3" y1="1" x2="3" y2="11" stroke="var(--accent-danger)" strokeWidth="0.5" opacity="0.15" />
     </svg>
   )
 }
 
-// ── Loading screen ─────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -102,14 +99,13 @@ function LoadingScreen() {
           className="font-mono text-sm"
           style={{ color: 'var(--text-muted)', animation: 'blink-warning 1.2s infinite' }}
         >
-          CONNECTING TO SENTINEL…
+          CONNECTING TO SENTINEL...
         </span>
       </div>
     </div>
   )
 }
 
-// ── Error screen ───────────────────────────────────────────────────────────
 function ErrorScreen({ error, refetch }) {
   return (
     <div className="flex items-center justify-center h-64">
@@ -137,24 +133,70 @@ function ErrorScreen({ error, refetch }) {
   )
 }
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────
-export function Dashboard() {
-  const { state, log, loading, error, refetch } = useContractState()
+function EmptyState() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="card p-6 text-center" style={{ maxWidth: 480 }}>
+        <div
+          className="font-display font-bold mb-2"
+          style={{ color: 'var(--accent-warn)', letterSpacing: '0.08em' }}
+        >
+          NO PROTOCOLS CONFIGURED
+        </div>
+        <div className="font-mono text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+          Create your first protocol profile from the Admin page. Each profile can have its own
+          aliases, trusted sources, risk state, pause state, and incident history.
+        </div>
+      </div>
+    </div>
+  )
+}
 
+function ProtocolSelector({ protocols, selectedProtocolId, setSelectedProtocolId }) {
+  return (
+    <select
+      value={selectedProtocolId ?? ''}
+      onChange={event => setSelectedProtocolId(Number(event.target.value))}
+      className="font-mono w-full sm:w-auto"
+      style={{
+        background: 'transparent',
+        border: '1px solid var(--border)',
+        color: 'var(--text-primary)',
+        padding: '6px 10px',
+        fontSize: '0.68rem',
+      }}
+    >
+      {protocols.map(protocol => (
+        <option key={protocol.protocol_id} value={protocol.protocol_id} style={{ color: '#111' }}>
+          {protocol.protected_protocol} #{protocol.protocol_id}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+export function Dashboard({
+  protocols,
+  state,
+  log,
+  loading,
+  error,
+  refetch,
+  selectedProtocolId,
+  setSelectedProtocolId,
+}) {
   if (loading) return <LoadingScreen />
-  if (error)   return <ErrorScreen error={error} refetch={refetch} />
+  if (error) return <ErrorScreen error={error} refetch={refetch} />
+  if (protocols.length === 0 || !state) return <EmptyState />
 
   const riskColor = RISK_COLORS[state?.risk_category] || 'var(--text-muted)'
 
   return (
     <div className="flex flex-col min-h-screen">
-
-      {/* ── Pause Banner ── */}
       <StatusBanner paused={state?.paused} reason={state?.pause_reason} />
 
-      {/* ── Header ── */}
       <header
-        className="anim-fade-up flex items-center justify-between px-6 py-4"
+        className="anim-fade-up flex flex-col gap-4 px-4 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-3">
@@ -170,18 +212,23 @@ export function Dashboard() {
               className="font-mono"
               style={{ fontSize: '0.58rem', color: 'var(--text-dim)', letterSpacing: '0.08em' }}
             >
-              PROTECTING {state?.protected_protocol || 'UNSET'} // GENLAYER
+              MONITORING {state?.protected_protocol || 'UNSET'} // PROFILE {state?.protocol_id}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <ProtocolSelector
+            protocols={protocols}
+            selectedProtocolId={selectedProtocolId}
+            setSelectedProtocolId={setSelectedProtocolId}
+          />
           <div className="flex items-center gap-2">
             <div className={`status-dot ${state?.paused ? 'paused' : 'active'}`} />
             <span
               className="font-display"
               style={{
-                fontSize:      '0.72rem',
+                fontSize: '0.72rem',
                 letterSpacing: '0.1em',
                 color: state?.paused ? 'var(--accent-danger)' : 'var(--accent-safe)',
               }}
@@ -189,39 +236,31 @@ export function Dashboard() {
               {state?.paused ? 'PAUSED' : 'ACTIVE'}
             </span>
           </div>
-          <div
-            className="font-mono"
-            style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}
-          >
+          <div className="font-mono" style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>
             {state?.check_count ?? 0} checks
           </div>
-          <button
-            onClick={refetch}
-            className="btn btn-safe"
-            style={{ fontSize: '0.65rem', padding: '4px 10px' }}
-          >
-            REFRESH
-          </button>
+          <div className="flex w-full sm:w-auto">
+            <button
+              onClick={refetch}
+              className="btn btn-safe"
+              style={{ fontSize: '0.65rem', padding: '4px 10px', width: '100%' }}
+            >
+              REFRESH
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* ── Main Grid ── */}
-      <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* ── Left: Gauge + Stats ── */}
+      <main className="flex-1 grid grid-cols-1 gap-6 p-4 sm:p-6 lg:grid-cols-3">
         <div className="flex flex-col gap-4">
-
-          {/* Risk Gauge Card */}
-          <div
-            className="card anim-fade-up anim-delay-1 p-6 flex flex-col items-center gap-4"
-          >
+          <div className="card anim-fade-up anim-delay-1 p-6 flex flex-col items-center gap-4">
             <div
               className="font-display w-full"
               style={{
-                fontSize:      '0.65rem',
+                fontSize: '0.65rem',
                 letterSpacing: '0.12em',
-                color:         'var(--text-dim)',
-                marginBottom:  -8,
+                color: 'var(--text-dim)',
+                marginBottom: -8,
               }}
             >
               THREAT LEVEL
@@ -251,7 +290,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3">
             <StatCard
               label="CAN DEPOSIT"
@@ -266,9 +304,9 @@ export function Dashboard() {
               delay={0.3}
             />
             <StatCard
-              label="MONITOR"
-              value={state?.monitor_enabled ? 'ON' : 'OFF'}
-              color={state?.monitor_enabled ? 'var(--accent-safe)' : 'var(--accent-danger)'}
+              label="SOURCES"
+              value={state?.trusted_sources?.length ?? 0}
+              color="var(--text-primary)"
               delay={0.35}
             />
             <StatCard
@@ -280,7 +318,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* ── Middle: Source Monitor ── */}
         <div
           className="card anim-fade-up anim-delay-2 flex flex-col"
           style={{ minHeight: 400 }}
@@ -299,18 +336,14 @@ export function Dashboard() {
           </div>
           <div className="flex-1 p-4">
             <SourceMonitor
+              selectedProtocolId={selectedProtocolId}
               lastSourceUrl={state?.last_source_url}
               lastCheckedTs={state?.last_checked_ts}
-              sources={[
-                'https://api.llama.fi/tvl/uniswap',
-                'https://rekt.news/',
-                'https://defillama.com/hacks',
-              ]}
+              sources={state?.trusted_sources ?? []}
             />
           </div>
         </div>
 
-        {/* ── Right: Incident Feed ── */}
         <div className="card anim-fade-up anim-delay-3 flex flex-col">
           <div
             className="px-4 py-3 flex items-center justify-between"
@@ -325,10 +358,7 @@ export function Dashboard() {
                 INCIDENT LOG
               </span>
             </div>
-            <span
-              className="font-mono"
-              style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}
-            >
+            <span className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>
               {log.length} records
             </span>
           </div>
@@ -336,26 +366,18 @@ export function Dashboard() {
             <IncidentFeed incidents={log} />
           </div>
         </div>
-
       </main>
 
-      {/* ── Footer ── */}
       <footer
-        className="px-6 py-3 flex items-center justify-between"
+        className="flex flex-col gap-2 px-4 py-3 sm:px-6 sm:flex-row sm:items-center sm:justify-between"
         style={{ borderTop: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-4">
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}
-          >
-            AEGIS v1.0 // GENLAYER INTELLIGENT CONTRACT
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          <span className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+            AEGIS v2.0 // MULTI-PROTOCOL GENLAYER SENTINEL
           </span>
           {state?.last_checked_ts && (
-            <span
-              className="font-mono"
-              style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}
-            >
+            <span className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>
               Last check: {state.last_checked_ts}
             </span>
           )}
@@ -365,14 +387,11 @@ export function Dashboard() {
             className="status-dot"
             style={{
               background: 'var(--accent-safe)',
-              boxShadow:  '0 0 6px var(--accent-safe)',
-              animation:  'glow-pulse 2s infinite',
+              boxShadow: '0 0 6px var(--accent-safe)',
+              animation: 'glow-pulse 2s infinite',
             }}
           />
-          <span
-            className="font-mono"
-            style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}
-          >
+          <span className="font-mono" style={{ fontSize: '0.62rem', color: 'var(--text-dim)' }}>
             Polling every 5s
           </span>
         </div>

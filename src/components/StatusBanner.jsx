@@ -5,14 +5,13 @@ export function StatusBanner({ paused, reason }) {
 
   return (
     <div
-      className="w-full flex items-center justify-center gap-3 py-3 px-4"
+      className="flex w-full flex-col items-center justify-center gap-2 px-4 py-3 text-center sm:flex-row sm:gap-3"
       style={{
-        background:   'rgba(255, 26, 26, 0.12)',
+        background: 'rgba(255, 26, 26, 0.12)',
         borderBottom: '1px solid rgba(255, 68, 68, 0.35)',
-        animation:    'pulse-border 1.5s ease-in-out infinite',
+        animation: 'pulse-border 1.5s ease-in-out infinite',
       }}
     >
-      {/* Animated warning triangle */}
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
         <path
           d="M8 1L15 14H1L8 1Z"
@@ -33,13 +32,13 @@ export function StatusBanner({ paused, reason }) {
           letterSpacing: '0.14em',
         }}
       >
-        ⚠ PROTOCOL PAUSED — DEPOSITS SUSPENDED
+        ALERT // PROTOCOL PAUSED // DEPOSITS SUSPENDED
       </span>
 
       {reason && (
         <span
           className="font-mono"
-          style={{ color: 'rgba(255,68,68,0.7)', fontSize: '0.7rem' }}
+          style={{ color: 'rgba(255,68,68,0.7)', fontSize: '0.7rem', wordBreak: 'break-word' }}
         >
           /{reason.slice(0, 60)}/
         </span>

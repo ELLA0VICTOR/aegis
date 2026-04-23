@@ -203,6 +203,8 @@ body::before {
   font-size: 0.75rem;
   color: var(--text-muted);
   letter-spacing: 0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .hex-address .hex-prefix { color: var(--text-dim); }
 .hex-address .hex-body   { color: var(--text-muted); }
@@ -248,4 +250,18 @@ input[type="number"] { -moz-appearance: textfield; }
 input:focus, button:focus {
   outline: 1px solid rgba(0, 212, 170, 0.4);
   outline-offset: 1px;
+}
+
+@media (max-width: 640px) {
+  body::before {
+    background-size: 48px 42px;
+  }
+
+  .btn {
+    min-height: 40px;
+  }
+
+  .hex-address {
+    font-size: 0.68rem;
+  }
 }
